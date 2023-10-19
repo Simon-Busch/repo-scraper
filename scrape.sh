@@ -1,5 +1,5 @@
 # Set your GitHub organization and folder name
-ORG_NAME="code-423n4"
+ORG_NAME="github_org"
 FOLDER_NAME="public-repos"
 
 # Create the folder
@@ -19,7 +19,7 @@ while true; do
   PAGE=$((PAGE + 1))
 done
 
-# Clone each repository into the "public" folder
+# Clone each repository into the "Data" folder
 for repo in "${REPO_LIST[@]}"
 do
     REPO_NAME=$(basename $repo)

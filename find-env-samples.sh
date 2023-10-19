@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Define the directory where the repositories are cloned
+DATA_DIR="public-repos"
+
+# Create a temporary file to store unique environment variable names
+UNIQUE_VARS_FILE=$(mktemp)
+
+# Function to add or update a variable in the unique variables file
+add_or_update_variable() {
+    local var_name="$1"
+    if ! grep -q "^$var_name$" "$UNIQUE_VARS_FILE"; then
+        echo "$var_name" >> "$UNIQUE_VARS_FILE"
+    fi
+}
+
+# Loop through each repository folder and .env.[ANYTHING] files
+find "$DATA_DIR" -type f -name ".env.*" | while read -r env_sample; do
+    while IFS= read -r line; do
+        # Extract the environment variable name
+        if [[ "$line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=([^#]*) ]]; then
+            env_var="${BASH_REMATCH[1]}"
+            add_or_update_variable "$env_var"
+        fi
+    done < "$env_sample"
+done
+
+# Create the master .env.sample file with unique environment variable names
+MASTER_ENV_SAMPLE="master.env.sample"
+> "$MASTER_ENV_SAMPLE"  # Clear the file
+
+# Create a log file to record the count of each unique variable
+COUNT_LOG="env_variable_count.log"
+
+while IFS= read -r unique_var; do
+    count=$(grep -c "^$unique_var$" "$UNIQUE_VARS_FILE")
+    echo "$unique_var=$count" >> "$MASTER_ENV_SAMPLE"
+    echo "$unique_var=$count" >> "$COUNT_LOG"
+done < "$UNIQUE_VARS_FILE"
+
+# Remove the temporary file with unique variables
+rm "$UNIQUE_VARS_FILE"
+
+echo "Master .env.sample created with unique environment variable names and counts."
+echo "Variable counts logged in $COUNT_LOG."
